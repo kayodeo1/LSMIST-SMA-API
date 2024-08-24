@@ -1,8 +1,15 @@
 package auth.kayodeo1.com;
 
 import java.util.Properties;
-import jakarta.mail.*;
-import jakarta.mail.internet.*;
+
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 public class mailSender {
 
@@ -22,13 +29,13 @@ public class mailSender {
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host", smtpHost);
-        props.put("mail.smtp.port", String.valueOf(smtpPort));
-        props.put("mail.smtp.ssl.trust", smtpHost);
+        props.put("mail.smtp.host", "smtp.office365.com");
+        props.put("mail.smtp.port", "587");
+        props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        props.put("mail.smtp.connectiontimeout", "5000");
+        props.put("mail.smtp.timeout", "5000");
         props.put("mail.debug", "true");
-        props.put("mail.smtp.provider.class", "org.eclipse.angus.mail.smtp.SMTPProvider");
 
-        Thread.currentThread().setContextClassLoader(Session.class.getClassLoader());
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -43,22 +50,13 @@ public class mailSender {
             message.setSubject(subject);
             message.setContent(messageContent, "text/html");
 
-            Transport transport = session.getTransport("smtp");
-            transport.connect(smtpHost, smtpPort, username, password);
-            transport.sendMessage(message, message.getAllRecipients());
-            transport.close();
+            Transport.send(message);
 
             System.out.println("Email sent successfully!");
-
-        } catch (AuthenticationFailedException e) {
-            System.out.println("Authentication failed: " + e.getMessage());
-            e.printStackTrace();
         } catch (MessagingException e) {
-            System.out.println("Messaging exception: " + e.getMessage());
+            System.err.println("Failed to send email: " + e.getMessage());
             e.printStackTrace();
-        } catch (Exception e) {
-            System.out.println("Unexpected error: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException("Failed to send email", e);
         }
     }
 }
